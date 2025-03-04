@@ -40,7 +40,8 @@ class MyServer(Server):
 
     def onConnect(self, socket):
         self.clients.add(socket)
-        self.printOutput(f"New client connected, connected clients: {len(self.clients)}")
+        self.printOutput("New client connected")
+        self.printOutput(f"{len(self.clients)} active connected")
 
     def onMessage(self, socket, message):
         # message = message.encode()
@@ -48,8 +49,8 @@ class MyServer(Server):
         self.printOutput(f"Message received: {message}")
 
     def onDisconnect(self, socket):
-        self.printOutput("A client disconnected")
         self.clients.remove(socket)
+        self.printOutput(f"{len(self.clients)} active connected")
     
 
 ip = sys.argv[1]
