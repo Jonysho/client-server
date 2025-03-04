@@ -1,0 +1,3 @@
+1. Allow any number of clients to connect, and identify themselves with a screen name
+2. Allow any user to send messages to all other users
+3. Allow any user to send a private message to a particular user
