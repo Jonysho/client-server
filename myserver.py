@@ -42,11 +42,15 @@ class MyServer(Server):
         self.printOutput("New client connected")
         self.printOutput(f"{self.connected} active connected")
 
-    def register(self, socket, screen_name):
-        screen_name = screen_name.replace(" ", "_").capitalize()
+    def register(self, socket, params):
         if socket.screen_name:
             socket.send("Error: Already registered".encode())
-        elif screen_name in self.clients:
+        parts = params.split(" ")
+        if len(parts) != 1 or not parts[0]:
+            socket.send("Error: Usage is 'register <name>'".encode())
+            return
+        screen_name = parts[0].capitalize()
+        if screen_name in self.clients:
             socket.send("Error: Screen name already taken".encode())
         else:
             self.clients[screen_name] = socket
@@ -54,11 +58,47 @@ class MyServer(Server):
             self.printOutput(f"{screen_name} registered")
             socket.send(f"Welcome, {screen_name}!".encode())
             print(self.clients)
+        return True
+    
+    def send_all(self, socket, params):
+        if socket.screen_name is None:
+            socket.send("Error: You must register first".encode())
+            return False
+        if not params:
+            socket.send("Error: Usage is 'send_all <message>'".encode())
+            return False
+        message = f"Message from {socket.screen_name}: " + params
+        for c, s in self.clients.items():
+            if s == socket:
+                continue
+            s.send(message.encode())
+        return True
+
+    def send_private(self, socket, params):
+        if socket.screen_name is None:
+            socket.send("Error: You must register first".encode())
+            return False
+        parts = params.split(" ", 1)
+        if len(parts) != 2 or not parts[0] or not parts[1]:
+            socket.send("Error: Usage is 'send_private <user> <message>'".encode())
+            return False
+        screen_name, message = parts
+        if screen_name not in self.clients:
+            socket.send("Error: User not found".encode())
+            return False
+        self.clients[screen_name.capitalize()].send(f"Message from {socket.screen_name}: {message}".encode())
+        return True
 
     def onMessage(self, socket, message):
-        command, unsplit_parameters = message.strip().split(' ', 1) # <COMMAND> <PARAMETERS>
+        parts = message.strip().split(' ', 1)
+        command = parts[0]
+        params = parts[1] if len(parts) > 1 else ""
         if command.lower() == "register":
-            self.register(socket, unsplit_parameters)
+            self.register(socket, params)
+        elif command.lower() == "send_all":
+            self.send_all(socket, params)
+        elif command.lower() == "send_private":
+            self.send_private(socket, params)
         else:
             print(f"Unknown command: {command}")
 

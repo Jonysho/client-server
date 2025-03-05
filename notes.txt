@@ -5,15 +5,15 @@
 --- Protocol requirements ---
 
 1. registration of new users (unique 'screen name')
-    {username} registered
+    server --> {username} registered
     e.g. ’Mike registered’
 
 2. On User Request:
     a. send message to everyone connected
-        message from {username}: {message_text}
+        client --> message from {username}: {message_text}
         e.g. ’message from James: hello everyone’ 
     b. send message to specific user
-        message from {username}: {message_text}
+        client --> message from {username}: {message_text}
         e.g. ’message from James: hi Alex
     c. send list of registered/connected users
 
