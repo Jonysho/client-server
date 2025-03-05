@@ -5,7 +5,7 @@
     },
     "send_all": {
     "description": "Send message to all the users",
-    "command": ""
+    "command": "send_all %msg%"
     },
     "send_one": {
     "description": "Send a message to a specific user",

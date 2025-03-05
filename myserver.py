@@ -42,10 +42,8 @@ class MyServer(Server):
         self.printOutput("New client connected")
         self.printOutput(f"{self.connected} active connected")
 
-    def register(self, socket, parameters):
-        if len(parameters) != 1:
-            return "error invalid parameters"
-        screen_name = parameters[0]
+    def register(self, socket, screen_name):
+        screen_name = screen_name.replace(" ", "_").capitalize()
         if socket.screen_name:
             socket.send("Error: Already registered".encode())
         elif screen_name in self.clients:
@@ -58,11 +56,9 @@ class MyServer(Server):
             print(self.clients)
 
     def onMessage(self, socket, message):
-        # <COMMAND> <PARAMETERS>
-        pair = message.strip().split(' ')
-        command = pair[0].lower()
-        if command == "register":
-            self.register(socket, pair[1:])
+        command, unsplit_parameters = message.strip().split(' ', 1) # <COMMAND> <PARAMETERS>
+        if command.lower() == "register":
+            self.register(socket, unsplit_parameters)
         else:
             print(f"Unknown command: {command}")
 
