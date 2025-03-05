@@ -30,27 +30,48 @@ import sys
 from ex2utils import Server
 
 class MyServer(Server):
-    clients = set() # set of connected clients
-
     def onStart(self):
-        pass
+        self.connected = 0
+        self.clients = {} # {screen: socket}
       
     def onStop(self):
         pass
 
     def onConnect(self, socket):
-        self.clients.add(socket)
+        self.connected += 1
         self.printOutput("New client connected")
-        self.printOutput(f"{len(self.clients)} active connected")
+        self.printOutput(f"{self.connected} active connected")
+
+    def register(self, socket, parameters):
+        if len(parameters) != 1:
+            return "error invalid parameters"
+        screen_name = parameters[0]
+        if socket.screen_name:
+            socket.send("Error: Already registered".encode())
+        elif screen_name in self.clients:
+            socket.send("Error: Screen name already taken".encode())
+        else:
+            self.clients[screen_name] = socket
+            socket.screen_name = screen_name
+            self.printOutput(f"{screen_name} registered")
+            socket.send(f"Welcome, {screen_name}!".encode())
+            print(self.clients)
 
     def onMessage(self, socket, message):
-        # message = message.encode()
-        # socket.send(message)
-        self.printOutput(f"Message received: {message}")
+        # <COMMAND> <PARAMETERS>
+        pair = message.strip().split(' ')
+        command = pair[0].lower()
+        if command == "register":
+            self.register(socket, pair[1:])
+        else:
+            print(f"Unknown command: {command}")
+
+        # self.printOutput(f"Message received: {message}")
+        return True
 
     def onDisconnect(self, socket):
-        self.clients.remove(socket)
-        self.printOutput(f"{len(self.clients)} active connected")
+        self.connected -= 1
+        self.printOutput(f"{self.connected} active connected")
     
 
 ip = sys.argv[1]

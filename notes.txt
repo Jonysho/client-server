@@ -1,3 +1,26 @@
 1. Allow any number of clients to connect, and identify themselves with a screen name
 2. Allow any user to send messages to all other users
 3. Allow any user to send a private message to a particular user
+
+--- Protocol requirements ---
+
+1. registration of new users (unique 'screen name')
+    {username} registered
+    e.g. ’Mike registered’
+
+2. On User Request:
+    a. send message to everyone connected
+        message from {username}: {message_text}
+        e.g. ’message from James: hello everyone’ 
+    b. send message to specific user
+        message from {username}: {message_text}
+        e.g. ’message from James: hi Alex
+    c. send list of registered/connected users
+
+3a. Notify user if command isn't valid: 'unkown command'
+3b. Notify if user not registered: 'not registered'
+
+4. Handle close connection requests from the users
+
+
+
