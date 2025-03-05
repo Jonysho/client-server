@@ -99,14 +99,26 @@ class MyServer(Server):
             self.send_all(socket, params)
         elif command.lower() == "send_private":
             self.send_private(socket, params)
+        elif command.lower() == "online":
+            if not self.clients:
+                socket.send("No online users".encode())
+            else:
+                output = f"Online users ({len(self.clients)}): "+", ".join(self.clients)
+                socket.send(output.encode())
+        elif command.lower() == "dc":
+            socket.send("Goodbye!".encode())
+            return False
         else:
-            print(f"Unknown command: {command}")
+            socket.send(f"Unkown command {command}".encode())
 
         # self.printOutput(f"Message received: {message}")
         return True
 
     def onDisconnect(self, socket):
         self.connected -= 1
+        if socket.screen_name:
+            self.clients.pop(socket.screen_name)
+            self.printOutput(f"{socket.screen_name} disconnected")
         self.printOutput(f"{self.connected} active connected")
     
 

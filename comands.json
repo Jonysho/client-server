@@ -13,10 +13,10 @@
     },
     "online_users": {
     "description": "Get the list of all online users",
-    "command": ""
+    "command": "online"
     },
     "close_connection": {
     "description": "Disconnect the current client",
-    "command": ""
+    "command": "dc"
     }
 }
