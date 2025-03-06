@@ -28,6 +28,7 @@
 """
 import sys
 from ex2utils import Server
+import json
 
 class MyServer(Server):
     def onStart(self):
@@ -39,54 +40,66 @@ class MyServer(Server):
 
     def onConnect(self, socket):
         self.connected += 1
+        socket.screen_name = None
         self.printOutput("New client connected")
         self.printOutput(f"{self.connected} active connected")
 
+    def send_error(self, socket, message):
+        response = json.dumps({"type": "error", "message": message})
+        socket.send(response.encode())
+
+    def send_success(self, socket, message):
+        response = json.dumps({"type": "success", "message": message})
+        socket.send(response.encode())
+
     def register(self, socket, params):
         if socket.screen_name:
-            socket.send("Error: Already registered".encode())
+            self.send_error(socket, "You are already registered")
+            return False
         parts = params.split(" ")
         if len(parts) != 1 or not parts[0]:
-            socket.send("Error: Usage is 'register <name>'".encode())
-            return
+            self.send_error(socket, "Usage is 'register <screen_name>'")
+            return False
         screen_name = parts[0].capitalize()
         if screen_name in self.clients:
-            socket.send("Error: Screen name already taken".encode())
-        else:
-            self.clients[screen_name] = socket
-            socket.screen_name = screen_name
-            self.printOutput(f"{screen_name} registered")
-            socket.send(f"Welcome, {screen_name}!".encode())
-            print(self.clients)
+            self.send_error(socket, "Screen name already in use")
+            return False
+        self.clients[screen_name] = socket
+        socket.screen_name = screen_name
+        self.send_success(socket, f"Welcome, {screen_name}!")
         return True
     
     def send_all(self, socket, params):
         if socket.screen_name is None:
-            socket.send("Error: You must register first".encode())
+            self.send_error(socket, "You must register first")
             return False
         if not params:
-            socket.send("Error: Usage is 'send_all <message>'".encode())
+            self.send_error(socket, "Usage is 'send_all <message>'")
             return False
         message = f"Message from {socket.screen_name}: " + params
-        for c, s in self.clients.items():
+        for s in self.clients.values():
             if s == socket:
                 continue
-            s.send(message.encode())
+            self.send_success(s, message)
         return True
 
     def send_private(self, socket, params):
         if socket.screen_name is None:
-            socket.send("Error: You must register first".encode())
+            self.send_error(socket, "You must register first")
             return False
         parts = params.split(" ", 1)
         if len(parts) != 2 or not parts[0] or not parts[1]:
-            socket.send("Error: Usage is 'send_private <user> <message>'".encode())
+            self.send_error(socket, "Usage is 'send_private <screen_name> <message>'")
             return False
         screen_name, message = parts
+        screen_name = screen_name.capitalize()
         if screen_name not in self.clients:
-            socket.send("Error: User not found".encode())
+            self.send_error(socket, "Screen name not found")
             return False
-        self.clients[screen_name.capitalize()].send(f"Message from {socket.screen_name}: {message}".encode())
+        if screen_name == socket.screen_name:
+            self.send_error(socket, "You can't send a private message to yourself")
+            return False
+        self.send_success(self.clients[screen_name], f"Private message from {socket.screen_name}: {message}")
         return True
 
     def onMessage(self, socket, message):
@@ -101,15 +114,15 @@ class MyServer(Server):
             self.send_private(socket, params)
         elif command.lower() == "online":
             if not self.clients:
-                socket.send("No online users".encode())
+                self.send_success(socket, "No online users")
             else:
                 output = f"Online users ({len(self.clients)}): "+", ".join(self.clients)
-                socket.send(output.encode())
+                self.send_success(socket, output)
         elif command.lower() == "dc":
-            socket.send("Goodbye!".encode())
+            self.send_success(socket, "Client exiting")
             return False
         else:
-            socket.send(f"Unkown command {command}".encode())
+            self.send_error(socket, "unknown command")
 
         # self.printOutput(f"Message received: {message}")
         return True
@@ -120,17 +133,13 @@ class MyServer(Server):
             self.clients.pop(socket.screen_name)
             self.printOutput(f"{socket.screen_name} disconnected")
         self.printOutput(f"{self.connected} active connected")
+        socket.close()
     
 
 ip = sys.argv[1]
 port = int(sys.argv[2])
 
-# Create an echo server.
 server = MyServer()
-
-# If you want to be an egomaniac, comment out the above command, and uncomment the
-# one below...
-# server = EgoServer()
 
 # Start server
 server.start(ip, port)

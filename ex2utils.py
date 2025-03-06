@@ -18,7 +18,6 @@ class Socket():
 	def __init__(self, socket):
 		# Store internal socket pointer
 		self._socket = socket
-		self.screen_name = None
 	
 	def send(self, msg):
 		# Ensure a single new-line after the message
@@ -26,7 +25,6 @@ class Socket():
 		self._socket.send(msg.strip()+b"\n")
 	def close(self):
 		self._socket.close()
-		
 
 class Receiver():
 	"""

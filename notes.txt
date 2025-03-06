@@ -2,7 +2,7 @@
 2. Allow any user to send messages to all other users
 3. Allow any user to send a private message to a particular user
 
---- Protocol requirements ---
+--- Server Protocol requirements ---
 
 1. registration of new users (unique 'screen name')
     server --> {username} registered
@@ -22,5 +22,12 @@
 
 4. Handle close connection requests from the users
 
+--- Client Protocol requirements ---
 
+1. Connect to server
 
+2. Register screen name (repeat until valid)
+
+3. Repeatedly requests input from user, sends message to server
+
+4. Close connection. send msg to server to close, client only exits after receiving msg ('Client exiting') from server.
