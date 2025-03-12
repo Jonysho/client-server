@@ -24,15 +24,10 @@ class IRCClient(Client):
         # Process incoming messages here
         response = json.loads(message)
         self.received_message = response
-        print("onnnn")
         if response["type"] == "error":
             print(f"Error: {response['message']}")
         else:
-            print(response['message'])
-            if response["message"] == "Client exiting":
-                self.stop()
-            else:
-                self.send_message()
+            print(response["message"])
         return True
       
     def register(self):
@@ -40,14 +35,17 @@ class IRCClient(Client):
             screen_name = input("Enter screen name: ")
             self.send(f"register {screen_name}".encode())
             if self.received_message["type"] == "success":
-                print("x")
                 break
+        self.send_message()
 
     def send_message(self):
-        message = input("Enter message (or 'exit' to disconnect): ")
-        if message.lower() == 'exit':
-            self.send("dc".encode())
-        self.send(message.encode())
+        while True:
+            message = input()
+            self.send(message.encode())
+            time.sleep(0.5)
+            if self.received_message["message"] == "Client exiting":
+                break
+        self.stop()
 
 # Parse the IP address and port you wish to connect to.
 ip = sys.argv[1]
@@ -61,6 +59,3 @@ client.start(ip, port)
 
 # Register screen name
 client.register()
-
-# Stop client
-client.stop()

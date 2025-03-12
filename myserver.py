@@ -36,13 +36,17 @@ class MyServer(Server):
         self.clients = {} # {screen: socket}
       
     def onStop(self):
-        pass
+        for s in self.clients.values():
+            s.send("Server shutting down".encode())
+            s.close()
+        self.clients.clear()
+        self.printOutput("Server stopped")
 
     def onConnect(self, socket):
         self.connected += 1
         socket.screen_name = None
         self.printOutput("New client connected")
-        self.printOutput(f"{self.connected} active connected")
+        self.printOutput(f"{self.connected} active clients")
 
     def send_error(self, socket, message):
         response = json.dumps({"type": "error", "message": message})
@@ -66,6 +70,7 @@ class MyServer(Server):
             return False
         self.clients[screen_name] = socket
         socket.screen_name = screen_name
+        self.printOutput(f"{screen_name} registered")
         self.send_success(socket, f"Welcome, {screen_name}!")
         return True
     
@@ -99,10 +104,11 @@ class MyServer(Server):
         if screen_name == socket.screen_name:
             self.send_error(socket, "You can't send a private message to yourself")
             return False
-        self.send_success(self.clients[screen_name], f"Private message from {socket.screen_name}: {message}")
+        self.send_success(self.clients[screen_name], f"Message from {socket.screen_name}: {message}")
         return True
 
     def onMessage(self, socket, message):
+        self.printOutput(f"Message received: {message}")
         parts = message.strip().split(' ', 1)
         command = parts[0]
         params = parts[1] if len(parts) > 1 else ""
@@ -132,7 +138,8 @@ class MyServer(Server):
         if socket.screen_name:
             self.clients.pop(socket.screen_name)
             self.printOutput(f"{socket.screen_name} disconnected")
-        self.printOutput(f"{self.connected} active connected")
+        self.printOutput("Client disconnected")
+        self.printOutput(f"{self.connected} active clients")
         socket.close()
     
 

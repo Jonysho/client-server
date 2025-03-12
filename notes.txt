@@ -31,3 +31,4 @@
 3. Repeatedly requests input from user, sends message to server
 
 4. Close connection. send msg to server to close, client only exits after receiving msg ('Client exiting') from server.
+
